@@ -6,9 +6,10 @@ import jakarta.persistence.*;
 @Entity
 public class Project {
 
-    public Project(Integer projectId, String projectName, User user) {
+    public Project(Integer projectId, String projectName, Double powerGenerated, User user) {
         this.projectId = projectId;
         this.projectName = projectName;
+        this.powerGenerated = powerGenerated;
         this.user = user;
     }
     public Project() {}
@@ -18,6 +19,7 @@ public class Project {
     @Column(name = "project_id")
     private Integer projectId;
     private String projectName;
+    private Double powerGenerated;
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
@@ -43,6 +45,22 @@ public class Project {
     }
 
     public void setPlanner(User user) {
+        this.user = user;
+    }
+
+    public Double getPowerGenerated() {
+        return powerGenerated;
+    }
+
+    public void setPowerGenerated(Double powerGenerated) {
+        this.powerGenerated = powerGenerated;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
         this.user = user;
     }
 

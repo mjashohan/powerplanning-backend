@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -67,8 +68,12 @@ public class PhotovoltaicSystemController {
     public PhotovoltaicSystem createPhotovoltaicSystem(@RequestBody SystemPayload system) throws IOException, InterruptedException, ApiException {
         User user = userRepository.findByUsername(system.username);
         Hourly hourly = weatherService.getCoreWeatherData(Float.parseFloat(system.latitude), Float.parseFloat(system.longitude));
-        Project project = projectRepository.findProjectByUser(user);
 
+        System.out.println(system.manufacturer);
+        System.out.println(system.area);
+        System.out.println(system.latitude);
+        System.out.println(system.longitude);
+        System.out.println(system.tilt);
         PhotovoltaicSystem createdSystem = new PhotovoltaicSystem();
         createdSystem.setSystemId(null);
         createdSystem.setSystemName(system.systemName);
@@ -79,7 +84,6 @@ public class PhotovoltaicSystemController {
         createdSystem.setArea(Integer.parseInt(system.area));
         createdSystem.setTilt(Double.parseDouble(system.tilt));
         createdSystem.setUser(user);
-        createdSystem.setProject(project);
         photovoltaicSystemRepository.save(createdSystem); // Save the PhotovoltaicSystem entity first
 
         Location createdLocation = new Location();
@@ -98,7 +102,15 @@ public class PhotovoltaicSystemController {
         createdWeather.setId(null);
         List<WeatherData> weatherData = photovoltaicSystemService.mapHourlyToWeatherData(hourly, createdLocation);
         weatherJpaRepository.saveAll(weatherData);
-
+        Project project = new Project();
+        double powerGenerated = photovoltaicSystemService.calulatePowerGenerated(powerPeak, photovoltaicSystemService.findMaxIrradiance(hourly), Integer.parseInt(system.area));
+        project.setProjectId(null);
+        project.setProjectName(system.systemName);
+        project.setPowerGenerated(powerGenerated);
+        project.setUser(user);
+        projectRepository.save(project);
+        createdSystem.setProject(project);
+        photovoltaicSystemRepository.save(createdSystem);
         return createdSystem;
         //return new ResponseEntity<>(createdSystem, HttpStatus.CREATED);
     }
@@ -111,18 +123,28 @@ public class PhotovoltaicSystemController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePhotovoltaicSystem(@PathVariable("id") Long id) {
-        photovoltaicSystemRepository.deleteById(id);
-
+    public ResponseEntity<Void> deletePhotovoltaicSystem(@PathVariable String id) {
+        photovoltaicSystemRepository.deleteById(Long.parseLong(id));
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PostMapping("/sendEmail")
-        public String sendEmail(@RequestBody EmailDTO email) {
-        String to = email.to;
-        String subject = email.subject;
-        String body = email.message;
+        public String sendEmail(@RequestBody List<EmailDTO> email) {
+        User user = userRepository.findByUsername(email.get(0).username);
+        String to = user.getEmail();
+        String subject = "Reports for" + email.get(0).username+ "are here!";
+        List<String> body = new ArrayList<>();
+        for (EmailDTO emailDTO : email) {
+            body.add("Power peak: " + emailDTO.powerPeak + "\n"
+                    + "Orientation: " + emailDTO.orientation + "\n"
+                    + "Tilt: " + emailDTO.tilt + "\n"
+                    + "Area: " + emailDTO.area + "\n"
+                    + "Latitude: " + emailDTO.latitude + "\n"
+                    + "Longitude: " + emailDTO.longitude + "\n"
+                    + "----------------------------- \n"
+                    + "Total Power Generated: " + emailDTO.powerGenerated + "kWh");
 
+        }
         photovoltaicSystemService.sendEmail(to, subject, body);
 
         return "Email sent!";

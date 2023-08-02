@@ -14,7 +14,7 @@ public class LocationService {
     private GeoApiContext geoApiContext;
 
     public  LocationService() {
-        geoApiContext = new GeoApiContext.Builder().apiKey("AIzaSyAgDctjSdnYOAo7ovXQaeD6e1ls1v99MgI").build();
+        geoApiContext = new GeoApiContext.Builder().apiKey("INSERT_MAP_API_HERE").build();
     }
 
     public String findAddress(Float latitude, Float longitude) throws IOException, InterruptedException, ApiException {

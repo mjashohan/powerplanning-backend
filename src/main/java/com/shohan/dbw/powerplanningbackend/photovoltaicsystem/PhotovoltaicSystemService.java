@@ -79,11 +79,25 @@ public class PhotovoltaicSystemService {
                 .max().orElse(Double.MIN_VALUE);
     }
 
-    public void sendEmail(String to, String subject, String body) {
+    public void sendEmail(String to, String subject, List<String> bodyList) {
         SimpleMailMessage mailMessage = new SimpleMailMessage();
         mailMessage.setTo(to);
         mailMessage.setSubject(subject);
-        mailMessage.setText(body);
+        StringBuilder stringBuilder = new StringBuilder();
+        for(String line : bodyList) {
+            stringBuilder.append(line);
+            stringBuilder.append("\n");
+        }
+        mailMessage.setText(stringBuilder.toString());
         javaMailSender.send(mailMessage);
+    }
+
+    private String reportFormat(List<String> body) {
+
+        return "";
+    }
+
+    public double calulatePowerGenerated(double peak, double irradiance, double area){
+        return peak * irradiance * (area/0.00001);
     }
 }
